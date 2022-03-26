@@ -1,0 +1,29 @@
+{
+    "plugins": [
+        "babel"
+    ],
+    "env": {
+        "node": true
+    },
+    "extends": [
+        "airbnb-base",
+        "airbnb-typescript/base"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "project": "./tsconfig.json"
+    },
+    "rules": {
+        "no-console": 0,
+        "import/prefer-default-export": 0,
+        "@typescript-eslint/semi": ["error", "never"],
+        "@typescript-eslint/naming-convention": [
+            "warn",
+            {
+              "selector": "variable",
+              "format": ["camelCase"]
+            }
+        ]
+    }
+  }
+  
