@@ -1,4 +1,4 @@
-import { Templates } from '../resources'
+import { Templates } from '../enums'
 
 type Content = {
   template: Templates,

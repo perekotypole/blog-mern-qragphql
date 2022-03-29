@@ -1,4 +1,4 @@
-import { Roles } from '../resources'
+import { Roles } from '../enums'
 
 export type userModel = {
   id: string

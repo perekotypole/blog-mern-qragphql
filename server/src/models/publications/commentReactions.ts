@@ -1,4 +1,4 @@
-import { Reactions } from '../resources'
+import { Reactions } from '../enums'
 
 export type commentReactionsModel = {
   id: string;
