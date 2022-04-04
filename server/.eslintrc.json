@@ -17,13 +17,7 @@
         "no-console": 0,
         "import/prefer-default-export": 0,
         "@typescript-eslint/semi": ["error", "never"],
-        "@typescript-eslint/naming-convention": [
-            "warn",
-            {
-              "selector": "variable",
-              "format": ["camelCase"]
-            }
-        ]
+        "@typescript-eslint/naming-convention": 0
     }
   }
   

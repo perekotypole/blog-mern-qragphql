@@ -3,17 +3,15 @@ import { userModel } from '../../models'
 
 const resolvers = {
   Query: {
-    findUser: (root: any, { id }) => {
-      return new Promise((resolve, reject) => {
-        User.findOne(
-          { _id: id },
-          (err: any, user: userModel) => {
-            if (err) reject(err)
-            else resolve(user)
-          },
-        )
-      })
-    },
+    findUser: (root: any, { id }) => new Promise((resolve, reject) => {
+      User.findOne(
+        { _id: id },
+        (err: any, res: userModel) => {
+          if (err) reject(err)
+          else resolve(res)
+        },
+      )
+    }),
   },
   Mutation: {
     createUser: (root: any, { user }) => {
@@ -21,9 +19,9 @@ const resolvers = {
       const newUser = new User({ ...rest })
 
       return new Promise((resolve, reject) => {
-        newUser.save((err: any, user: userModel) => {
+        newUser.save((err: any, res: userModel) => {
           if (err) reject(err)
-          else resolve(user)
+          else resolve(res)
         })
       })
     },
