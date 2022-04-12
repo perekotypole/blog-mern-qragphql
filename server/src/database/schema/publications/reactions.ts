@@ -1,12 +1,12 @@
 import { Schema } from 'mongoose'
 
 export const publicationReactionSchema = new Schema({
-  userID: {
+  user: {
     type: Schema.Types.ObjectId,
     required: 'User is required',
     ref: 'User',
   },
-  publicationID: {
+  publication: {
     type: Schema.Types.ObjectId,
     required: 'Publication is required',
     ref: 'Publication',

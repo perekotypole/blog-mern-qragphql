@@ -1,5 +1,5 @@
 export type followingModel = {
   id: string
-  userID: string,
-  followedUserID: string,
+  user: string,
+  followedUser: string,
 }

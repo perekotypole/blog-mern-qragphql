@@ -1,6 +1,6 @@
 export type userBanModel = {
   id: string
-  userID: string,
+  user: string,
   period: {
     start: Date,
     finish: Date,

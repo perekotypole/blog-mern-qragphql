@@ -1,9 +1,18 @@
 import React from 'react'
 
-const Card = ({ children, rounded = false }) => (
+const Card = ({ children, rounded = false, fit = false, sx = {} }) => (
   <>
-    <div className={`card ${!rounded || 'card-rounded'}`}>
-      {children}
+    <div
+      className={`card`}
+      style={{
+        display: fit ? 'inline-block' : 'block',
+        borderRadius: rounded || '20px',
+        ...sx
+      }}      
+      >
+        <div>
+          {children}
+        </div>
     </div>
 
     <style jsx>{`
@@ -14,6 +23,10 @@ const Card = ({ children, rounded = false }) => (
         border-radius: 10px;
 
         overflow: hidden;
+      }
+      
+      .card>div {
+        margin-bottom: -4px;
       }
 
       .card-rounded {

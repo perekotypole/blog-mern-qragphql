@@ -13,7 +13,6 @@ export enum Reactions {
 export enum Templates {
   paragraph = 'paragraph',
   list = 'list',
-  tabel = 'tabel',
   image = 'image',
   subtitle = 'subtitle',
 }

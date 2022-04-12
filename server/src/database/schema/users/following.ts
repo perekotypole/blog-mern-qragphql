@@ -1,12 +1,12 @@
 import { Schema } from 'mongoose'
 
 export const followingSchema = new Schema({
-  userID: {
+  user: {
     type: Schema.Types.ObjectId,
     required: 'User is required',
     ref: 'User',
   },
-  followedUserID: {
+  followedUser: {
     type: Schema.Types.ObjectId,
     required: 'Followed user is required',
     ref: 'User',

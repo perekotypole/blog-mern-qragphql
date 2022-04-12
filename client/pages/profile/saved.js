@@ -1,9 +1,9 @@
 import React from 'react'
 import { gql } from "@apollo/client";
-import client from "../apollo-client";
+import client from "../../apollo-client";
 
-import Layout from '../components/Layout'
-import PostItem from '../components/PostItem'
+import Layout from '../../components/Layout'
+import PostItem from '../../components/PostItem'
 
 export const getStaticProps = async () => {
   const { data } = await client.query({
@@ -39,7 +39,7 @@ export const getStaticProps = async () => {
  };
 }
 
-const HomePage = ({ publications }) => {
+const SavedPage = ({ publications }) => {
   const posts = publications.map(({
     _id,
     title,
@@ -67,6 +67,8 @@ const HomePage = ({ publications }) => {
   return (
     <>
       <Layout role="user">
+        <h2 className='title upper'>Saved</h2>
+
         { posts }
       </Layout>
 
@@ -76,4 +78,4 @@ const HomePage = ({ publications }) => {
   )
 }
 
-export default HomePage
+export default SavedPage

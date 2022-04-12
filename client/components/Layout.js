@@ -1,4 +1,6 @@
 import React from 'react'
+import "@fontsource/roboto/900.css"
+import "@fontsource/roboto/300.css"
 import Link from 'next/link'
 import Head from 'next/head'
 import Image from 'next/image'
@@ -18,7 +20,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import Card from './Card'
 import Content from './Content'
 
-const Layout = ({ children, role = 'guest' }) => (
+const Layout = ({ children, sidebar, role = 'guest' }) => (
   <>
     <Head>
       <title>f u z e</title>
@@ -29,109 +31,120 @@ const Layout = ({ children, role = 'guest' }) => (
     </Head>
 
     <main>
-      <div className='container sidebar sidebar-left'>
-        <header>
-          <Card>
-            <Content>
-              <h1 className='projectname' data-before="fuze">fuze</h1>
+      <div className='sidebar sidebar-left'>
+        <div className='container'>
+          <header>
+            <Card>
+              <Content>
+                <Link href={'/'} passHref>
+                  <h1 className='projectname' data-before="fuze">fuze</h1>
+                </Link>
 
-              <hr></hr>
+                <hr></hr>
 
-              <div className='menu'>
-                {
-                  ((role) => {
-                    switch (role) {
-                      case 'admin':
-                      case 'moderator':
-                      case 'user':
-                        return (
-                          <>
-                            <Link href={'/profile'}>
-                              <PersonIcon></PersonIcon>
-                            </Link>
+                <div className='menu'>
+                  {
+                    ((role) => {
+                      switch (role) {
+                        case 'admin':
+                        case 'moderator':
+                        case 'user':
+                          return (
+                            <>
+                              <Link href={'/profile'} passHref>
+                                <PersonIcon></PersonIcon>
+                              </Link>
 
-                            <Link href={'/publish'}>
-                              <EditIcon></EditIcon>
-                            </Link>
+                              <Link href={'/profile/publish'} passHref>
+                                <EditIcon></EditIcon>
+                              </Link>
 
-                            <Link href={'/notifications'}>
-                              <NotificationsIcon></NotificationsIcon>
-                            </Link>
+                              <Link href={'/profile/notifications'} passHref>
+                                <NotificationsIcon></NotificationsIcon>
+                              </Link>
 
-                            <Link href={'/saved'}>
-                              <BookmarkIcon></BookmarkIcon>
-                            </Link>
+                              <Link href={'/profile/saved'} passHref>
+                                <BookmarkIcon></BookmarkIcon>
+                              </Link>
 
-                            <Link href={'/auth'}>
-                              <LogoutIcon></LogoutIcon>
-                            </Link>
-                          </>
-                        )
-                        
-                      case 'guest':
-                      default:
-                        return (
-                          <>
-                            <span></span>
+                              <Link href={'/auth/logout'} passHref>
+                                <LogoutIcon></LogoutIcon>
+                              </Link>
+                            </>
+                          )
+                          
+                        case 'guest':
+                        default:
+                          return (
+                            <>
+                              <span></span>
 
-                            <Link href={'/auth'}>
-                              <LoginIcon></LoginIcon>
-                            </Link>
-                          </>
-                        )
-                    }
-                  })(role)
-                }
-              </div>
-            </Content>
+                              <Link href={'/auth/login'} passHref>
+                                <LoginIcon></LoginIcon>
+                              </Link>
+                            </>
+                          )
+                      }
+                    })(role)
+                  }
+                </div>
+              </Content>
+            </Card>
+          </header>
+
+          <Card rounded>
+            <Image alt='banner' src={'/images/plug1.png'} width={270} height={180}></Image>
           </Card>
-        </header>
 
-        <Card rounded>
-          <Image src={'/images/plug1.png'} width={270} height={180}></Image>
-        </Card>
+          <footer>
+            <Card>
+              <Content>
+                <div className='footer-menu'>
+                  <Link href={'/privacy'}>privacy</Link>
+                  <Link href={'/license'}>license</Link>
+                  <Link href={'/about'}>about</Link>
+                  <Link href={'/help'}>help</Link>
+                </div>
 
-        <footer>
-          <Card>
-            <Content>
-              <div className='footer-menu'>
-                <Link href={'/privacy'}>privacy</Link>
-                <Link href={'/license'}>license</Link>
-                <Link href={'/about'}>about</Link>
-                <Link href={'/help'}>help</Link>
-              </div>
-
-              <div className='footer-desc'>
-                {`©${new Date().getFullYear()}`}
-                &nbsp;&nbsp;
-                {`f u s e`}
-              </div>
-            </Content>
-          </Card>
-        </footer>
+                <div className='footer-desc'>
+                  {`©${new Date().getFullYear()}`}
+                  &nbsp;&nbsp;
+                  {`f u s e`}
+                </div>
+              </Content>
+            </Card>
+          </footer>
+        </div>
       </div>
 
       <div className='container content'>
-        {children}
+        <Content>
+          {children}
+        </Content>
       </div>
 
-      <div className='container sidebar sidebar-left'>
-        <Paper
-          component="form"
-          sx={{ p: '2px 4px', display: 'flex', alignItems: 'center' }}
-        >
-          <InputBase
-            sx={{ ml: 1, flex: 1 }}
-            placeholder="Search"
-            inputProps={{ 'aria-label': 'search=' }}
-          />
-          <IconButton type="submit" sx={{ p: '10px' }} aria-label="search">
-            <SearchIcon />
-          </IconButton>
-        </Paper>
-        <Card rounded>
-          <Image src={'/images/plug2.png'} width={270} height={300}></Image>
-        </Card>
+      <div className='sidebar sidebar-left'>
+        <div className='container'>
+          <Paper
+            component="form"
+            sx={{ p: '2px 4px', display: 'flex', alignItems: 'center' }}
+          >
+            <InputBase
+              sx={{ ml: 1, flex: 1 }}
+              placeholder="Search"
+              inputProps={{ 'aria-label': 'search=' }}
+            />
+            <IconButton type="submit" sx={{ p: '10px' }} aria-label="search">
+              <SearchIcon />
+            </IconButton>
+          </Paper>
+
+          {sidebar}
+          
+          <Card rounded>
+            <Image alt='banner' src={'/images/plug2.png'} width={270} height={300}></Image>
+          </Card>
+        </div>
       </div>
     </main>
 
@@ -146,13 +159,18 @@ const Layout = ({ children, role = 'guest' }) => (
       }
 
       .sidebar {
+        overflow: hidden;
+      }
+
+      .sidebar>* {
         width: 320px;
         height: 100vh;
-        overflow: hidden;
 
         display: flex;
         flex-direction: column;
         gap: 30px;
+
+        position: fixed;
       }
 
       .projectname {
@@ -177,6 +195,72 @@ const Layout = ({ children, role = 'guest' }) => (
         justify-content: flex-end;
       }
     `}</style>
+
+    <style jsx global>{`
+        html,
+        body {
+          font-family: Roboto, -apple-system, BlinkMacSystemFont, Segoe UI, 
+            Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue,
+            sans-serif;
+          font-weight: 300;
+
+          background-color: #FAFAFA;
+        }
+
+        * {
+          padding: 0;margin: 0;
+          box-sizing: border-box;
+        }
+
+        :root {
+          --color-contrast: #9B00FF;
+        }
+
+        .container {
+          padding: 30px 25px;
+        }
+
+        hr {
+          margin: 15px 0;
+          height: 3px;
+          background: #000000;
+        }
+
+        a {
+          color: black;
+          cursor: pointer;
+        }
+
+        *[href] {
+          cursor: pointer;
+        }
+
+        input {
+          caret-color: var(--color-contrast);
+        }
+
+        h2.title {
+          font-size: 32px;
+          font-weight: 1000;
+          margin-bottom: .5em;
+        }
+
+        h2.title.upper {
+          text-transform: uppercase;
+        }
+
+        .projectname {
+          color: rgba(155, 0, 255, 0.7);
+          text-shadow: .01em .07em .05em #fff,
+                       0 0 0 #000,
+                       .01em .07em .05em #fff;
+
+          line-height: 1em;
+          letter-spacing: 1.5em;
+          text-transform: uppercase;
+          font-weight: 1000;
+        }
+      `}</style>
   </>
 )
 

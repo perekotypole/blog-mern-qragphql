@@ -2,10 +2,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "lint": "next lint --fix",
     "build": "next build",
     "start": "next start"
   },
   "dependencies": {
+    "@apollo/client": "^3.5.10",
     "@babel/core": "^7.17.8",
     "@emotion/cache": "^11.7.1",
     "@emotion/react": "^11.8.2",
@@ -14,9 +16,15 @@
     "@fontsource/roboto": "^4.5.5",
     "@mui/icons-material": "^5.5.1",
     "@mui/material": "^5.5.3",
+    "draft-js": "^0.11.7",
+    "graphql": "^16.3.0",
     "next": "latest",
     "react": "17.0.2",
-    "react-dom": "17.0.2"
+    "react-dom": "17.0.2",
+    "react-draft-wysiwyg": "^1.14.7"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "eslint": "8.12.0",
+    "eslint-config-next": "12.1.4"
+  }
 }

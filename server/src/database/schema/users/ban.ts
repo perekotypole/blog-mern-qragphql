@@ -1,7 +1,7 @@
 import { Schema } from 'mongoose'
 
 export const userBanSchema = new Schema({
-  userID: {
+  user: {
     type: Schema.Types.ObjectId,
     required: 'User is required',
     ref: 'User',

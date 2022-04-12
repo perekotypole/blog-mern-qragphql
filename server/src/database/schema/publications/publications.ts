@@ -24,7 +24,7 @@ export const publicationSchema = new Schema({
     minLength: [3, 'Title must have at least 3 characters'],
     maxLength: [256, 'Title is too large. The maximum number of characters is 256'],
   },
-  userID: {
+  user: {
     type: Schema.Types.ObjectId,
     required: true,
     ref: 'User',
@@ -41,7 +41,7 @@ export const publicationSchema = new Schema({
     type: Number,
     default: () => 0,
   },
-  topicID: {
+  topic: {
     type: Schema.Types.ObjectId,
     required: true,
     ref: 'Topic',

@@ -2,16 +2,15 @@ import { Templates } from '../enums'
 
 type Content = {
   template: Templates,
-  params: object,
   data: string | string[] | string[][] | object
 }
 
 export type publicationModel = {
   id: string,
   title: string,
-  userID: string,
+  user: string,
   content: Content[],
   createdAt: Date,
   views: number,
-  topicID: string,
+  topic: string,
 }

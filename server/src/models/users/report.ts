@@ -1,5 +1,5 @@
 export type userReportModel = {
   id: string
-  userID: string,
-  reportedUserID: string,
+  user: string,
+  reportedUser: string,
 }
