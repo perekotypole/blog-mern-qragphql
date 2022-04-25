@@ -7,10 +7,11 @@ export const userSchema = new Schema({
     unique: 'Such username exists',
     lowercase: true,
     trim: true,
-    minLength: [8, 'Username must have at least 8 characters'],
-    maxLength: [20, 'Username is too large. The maximum number of characters is 20'],
+    // minLength: [8, 'Username must have at least 8 characters'],
+    // maxLength: [20, 'Username is too large. The maximum number of characters is 20'],
     //eslint-disable-line
-    match: [/^(?=.{8,20}$)(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_.])$/, 'Username is not valid'],
+    // match: [/^(?=.{8,20}$)(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_.])$/, 'Username is not valid'],
+    match: [/^(?!.*\.\.)(?!.*\.$)[^\W][\w.]{0,29}$/igm, 'Username is not valid'],
   },
   role: {
     type: String,
@@ -32,9 +33,9 @@ export const userSchema = new Schema({
   password: {
     type: String,
     trim: true,
-    required: 'Password is required',
-    minLength: [8, 'Password must have at least 8 characters'],
-    maxLength: [20, 'Password is too large. The maximum number of characters is 20'],
+    // required: 'Password is required',
+    // minLength: [8, 'Password must have at least 8 characters'],
+    // maxLength: [20, 'Password is too large. The maximum number of characters is 20'],
   },
   image: {
     type: Schema.Types.Buffer,
@@ -57,4 +58,8 @@ export const userSchema = new Schema({
     /* eslint-disable-next-line */
     match: [/[(http(s)?):\/\/(www\.)?a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/, 'Contact link is not valid'],
   },
-})
+  createdAt: {
+    type: Date,
+    default: () => new Date(),
+  },
+});

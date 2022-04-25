@@ -17,24 +17,12 @@ const typeDefs = gql`
     bio: String,
     paymant: String,
     contact: String,
-  }
-
-  input UserInput {
-    username: String,
-    role: Roles,
-    email: String,
-    password: String,
-    image: String,
-    bio: String,
-    paymant: String,
-    contact: String,
+    createdAt: String,
   }
 
   extend type Query {
-    findUser(id: String): User
-  }
-  extend type Mutation {
-    createUser(user: UserInput): User
+    ownProfile: User
+    username: String
   }
 `
 export default typeDefs

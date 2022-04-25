@@ -1,15 +1,79 @@
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/router'
+import { useCookies } from 'react-cookie'
 
 import Layout from "../../../components/Layout"
-import Content from "../../../components/Content"
-import Card from "../../../components/Card"
 import Button from "../../../components/Button"
 import Comment from "../../../components/Comment"
 import Reactions from "../../../components/Reactions"
 
+import draftToHtml from 'draftjs-to-html';
+import styled from 'styled-components'
+
 import { Avatar, TextField } from "@mui/material"
 import Bookmark from "@mui/icons-material/Bookmark"
+import BookmarkBorderOutlinedIcon from '@mui/icons-material/BookmarkBorderOutlined';
 import { deepPurple } from "@mui/material/colors"
+import { gql, useLazyQuery, useMutation, useQuery } from '@apollo/client'
+
+const PUBLICATION = gql`
+  query ($id: String) {
+    publication (id: $id) {
+      title,
+      content,
+      user {
+        _id,
+        username,
+        bio,
+        image,
+        createdAt
+      },
+      createdAt,
+      views,
+      saved
+    }
+  }
+`;
+
+const ADD_VIEWS = gql`
+  mutation ($id: String) {
+    addViews (id: $id)
+  }
+`;
+
+const COMMENTS = gql`
+query ($publicationID: String) {
+  comments (publicationID: $publicationID) {
+    _id,
+    user {
+      _id,
+      username
+    }
+    content,
+    createdAt
+  }
+}
+`;
+
+const WRITE_COMMENT = gql`
+  mutation ($comment: String, $publicationID: String) {
+    writeComment (comment: $comment, publicationID: $publicationID) {
+      _id,
+      user {
+        _id,
+        username
+      }
+      content,
+      createdAt
+    }
+  }
+`;
+
+const SAVE = gql`
+  mutation ($publicationID: String) {
+    toggleSaved(publicationID: $publicationID)
+  }
+`;
 
 const style = () => ({
   sx: {
@@ -31,188 +95,224 @@ const AdditionalBlock = ({
   published,
   views,
   bio,
-}) => (
-  <>
-    <div className="info">
-      <div className="profile">
-        <div className="user">
-          <div>
-            {
-              avatar ?
-              <Avatar {...style()} alt={username} src={avatar} /> :
-              <Avatar {...style()} {...stringAvatar(username)} />
-            }
+  saved, onSave = () => {},
+}) => {
+  const [cookie] = useCookies(['token'])
+  const [savedValue, setSavedValue] = useState(saved);
+
+  return (
+    <>
+      <div className="info">
+        <div className="profile">
+          <div className="user">
+            <div>
+              {
+                avatar ?
+                <Avatar {...style()} alt={username} src={avatar} /> :
+                <Avatar {...style()} {...stringAvatar(username)} />
+              }
+            </div>
+            
+            <div className="username">@{username}</div>
           </div>
-          
-          <div className="username">@{username}</div>
+
+          {/* <Button>follow</Button> */}
         </div>
 
-        <Button>follow</Button>
-      </div>
+        <div className="bio">{bio}</div>
 
-      <div className="bio">{bio}</div>
+        <hr></hr>
 
-      <hr></hr>
+        <div className="post">
+          <div className="details">
+            <div className="published"><span>publshed: </span>{published.toLocaleString()}</div>
+            <div className="views"><span>views: </span>{views}</div>
+          </div>
 
-      <div className="post">
-        <div className="details">
-          <div className="published"><span>publshed: </span>{published.toLocaleString()}</div>
-          <div className="views"><span>views: </span>{views}</div>
+          <div onClick={() => { onSave(); setSavedValue(!savedValue) }}>
+            { cookie['token'] && (savedValue ? <Bookmark></Bookmark> : <BookmarkBorderOutlinedIcon></BookmarkBorderOutlinedIcon>) }
+          </div>
         </div>
 
-        <Bookmark></Bookmark>
+        {/* <Reactions></Reactions> */}
       </div>
 
-      <Reactions></Reactions>
-    </div>
+      <style jsx>{`
+        .info {
+          font-size: 14px;
+        }
 
-    <style jsx>{`
-      .info {
-        font-size: 14px;
+        .profile {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+
+          margin-bottom: 10px;
+        }
+
+        .post {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+
+          margin-bottom: 20px;
+        }
+
+        .username {
+          font-weight: 900;
+          font-size: 20px;
+        }
+      `}</style>
+    </>
+  )
+}
+
+const PostPage = () => {
+  const router = useRouter()
+  const { id: postID } = router.query
+  
+  const [getPublication, { data: { publication } = {}, called }] = useLazyQuery(PUBLICATION)
+  const [incViews, { data: { addViews: newViews } = {}, called: calledIncViews }] = useMutation(ADD_VIEWS)
+  const [addComment, { data: { writeComment: newComment } = {}, error, reset }] = useMutation(WRITE_COMMENT)
+  const [toggleSaved, { data: { toggleSaved: saved } = {} }] = useMutation(SAVE)
+  
+  const commentRef = useRef()
+  const [comment, setComment] = useState()
+  const [comments, setNewComment] = useState([])
+
+  const { data: { comments: commentsData } = {} } = useQuery(COMMENTS, { variables: { publicationID: postID } })
+
+  useEffect(() => {
+    if (commentsData) setNewComment(oldArray => [...oldArray, ...commentsData])
+  }, [commentsData]);
+
+  if (newComment) {
+    setNewComment(oldArray => [newComment, ...oldArray])
+
+    commentRef.current?.querySelector('textarea').value = null
+    setComment()
+    reset()
+  }
+
+  useEffect(() => {
+    if (!called && postID) getPublication({ variables: { id: postID } })
+  }, [postID]);
+
+  const [cookies, setCookie] = useCookies(['views'])
+  
+  useEffect(() => {
+    if (postID && !calledIncViews) {
+      const views = cookies['views'] || []
+
+      if (!views.length || !views.includes(postID)) {
+        views.push(postID)
+        incViews({ variables: { id: postID }})
       }
 
-      .profile {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
+      if (views && views.length) setCookie('views', views, { path: '/' })
+    }
+  }, [postID]);
 
-        margin-bottom: 10px;
-      }
+  if (publication) {
+    const body = draftToHtml(JSON.parse(publication.content));
 
-      .post {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-
-        margin-bottom: 20px;
-      }
-
-      .username {
-        font-weight: 900;
-        font-size: 20px;
-      }
-    `}</style>
-  </>
-)
-
-const PostPage = () => (
-  <>
-    <Layout role="user" sidebar={
-      <AdditionalBlock
-        username={'user'}
-        published={new Date()}
-        views={'5'}
-        bio='Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam fringilla pulvinar consequat, mattis ornare netus. Arcu, praesent ut a at congue. Lacus sapien diam'
-      ></AdditionalBlock>
-    }>
-      <h2 className="title">Lorem ipsum dolor sit amet, consectetur adipiscing elit</h2>
-
-      <div className="content">
-        <p>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam fringilla pulvinar consequat, mattis ornare netus. Arcu, praesent ut a at congue. Lacus sapien diam iaculis dignissim viverra tellus quis. Suspendisse tincidunt sit dignissim magna amet. Lectus vitae vulputate odio in dolor, arcu tempor malesuada. Id morbi vel, bibendum nam amet quam.
-        </p>
-
-        <p>
-          Eget sem at nullam blandit luctus phasellus adipiscing lectus. Pellentesque mauris ullamcorper quam sit lacus scelerisque congue penatibus in. Venenatis adipiscing dictum purus malesuada. Et sed id augue adipiscing ante nunc, commodo pharetra. Sed pellentesque cursus dignissim facilisis sit nunc pellentesque tincidunt.
-        </p>
-
-        <div className="image">
-          <Card rounded fit>
-            <img src='/images/plug2.png'></img>
-          </Card>
-
-          <div className="image-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam fringilla pulvinar consequat, mattis ornare netus. Arcu, praesent</div>
-        </div>
-
-        <h3>Lorem ipsum dolor sit amet, consectetur adipiscing elit</h3>
-
-        <ul>
-          <li>Dis enim cras in tempus eu id tristique.</li>
-          <li>Vitae sit mauris, nibh imperdiet etiam pharetra eu  senectus</li>
-          <li>Non tempor gravida ut turpis. Turpis eget nunc suspendisse auctor urna.</li>
-          <li>Nulla senectus risus dictum vel fermentum potenti dui.</li>
-          <li>Massa nullam morbi senectus nunc ornare.</li>
-        </ul>
-      </div>
-
-      <div className="comments">
-        <div className="comment-input">
-          <TextField
-            id="outlined-multiline-static"
-            label='comment'
-            multiline
-            rows={2}
-            maxRows={4}
-            sx={{
-              width: '100%',
-            }}
-          />
-
-          <Button>send</Button>
-        </div>
-
-        <Comment
-          id={'1'}
-          username={'user'}
-          date={new Date()}
-          content={'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam fringilla pulvinar consequat, mattis ornare netus. Arcu, praesent ut a at congue. Lacus sapien diam iaculis dignissim viverra tellus quis. Suspendisse tincidunt sit dignissim magna amet.'}
-        ></Comment>
-      </div>
-    </Layout>
-
-    <style jsx>{`
-      .content>* {
+    const Article = styled.div`
+      & > * {
         margin-top: 25px;
         margin-bottom: 25px;
       }
 
-      p {
+      & p {
         text-align: justify;
       }
 
-      .image {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-
-        text-align: center;
-        color: #656565;
-        font-size: 12px;
-      }
-
-      .image img {
+      & img {
+        display: block;
+        margin: 0 auto;
+        border-radius: 20px;
         max-height: 350px;
       }
 
-      .image .image-description {
-        margin-top: 10px;
-      }
-
-      h3 {
-        font-weight: 900;
-        font-size: 20px;
-      }
-
-      ul {
+      & ul {
         margin-left: 1.7em;
+
+        & li {
+          margin-bottom: 5px;
+        }
       }
 
-      li {
-        margin-bottom: 5px;
-      }
+    `
 
-      .comments {
-        margin-top: 50px;
-      }
+    return (
+      <>
+        <Layout sidebar={
+          <AdditionalBlock
+            username={publication.user.username}
+            published={new Date(Number(publication.user.createdAt))}
+            views={newViews || publication.views}
+            bio={publication.user.bio}
+            saved={publication.saved}
+            onSave={() => { toggleSaved({ variables: { publicationID: postID } }) }}
+          ></AdditionalBlock>
+        }>
+          <h2 className="title">{publication.title}</h2>
 
-      .comment-input {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        align-items: flex-end;
-      }
-    `}</style>
+          <Article
+            dangerouslySetInnerHTML={{__html: body}}
+          ></Article>
+
+          <div className="comments">
+            <div className="comment-input">
+              <TextField
+                ref={commentRef}
+                id="outlined-multiline-static"
+                label='comment'
+                multiline
+                rows={2}
+                sx={{
+                  width: '100%',
+                }}
+                onChange={(e) => {setComment(e.target.value)}}
+              />
+
+              <Button onClick={() => comment && addComment({ variables: { comment, publicationID: postID }})}>send</Button>
+            </div>
+
+            {
+              comments.map(({ _id, user, createdAt, content }) => 
+                <div key={_id}>
+                  <Comment
+                    id={_id}
+                    username={user.username}
+                    date={new Date(Number(createdAt))}
+                    content={content}
+                  ></Comment>
+                </div>
+              )
+            }
+          </div>
+        </Layout>
+
+        <style jsx>{`
+
+          .comments {
+            margin-top: 50px;
+          }
+
+          .comment-input {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-end;
+          }
+        `}</style>
+      </>
+    )
+  }
+
+  return <>
+    <Layout loading={true}></Layout>
   </>
-)
+}
 
 export default PostPage

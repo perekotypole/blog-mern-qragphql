@@ -1,45 +1,33 @@
 import React from 'react'
-import { gql } from "@apollo/client";
-import client from "../apollo-client";
+import { gql, useQuery } from "@apollo/client";
 
 import Layout from '../components/Layout'
 import PostItem from '../components/PostItem'
 
-export const getStaticProps = async () => {
-  const { data } = await client.query({
-    query: gql`
-      query {
-        latestPublications {
-          _id,
-          title,
-          user {
-            username
-          },
-          image {
-            image,
-            description
-          },
-          text,
-          createdAt,
-          views,
-          topic {
-            title
-          }
-        }
+const LATEST = gql`
+  query {
+    latestPublications {
+      _id,
+      title,
+      user {
+        username
+      },
+      image,
+      text,
+      createdAt,
+      views,
+      topic {
+        title
       }
-    `,
-  });
+    }
+  }
+`
 
-  // console.log(data);
+const HomePage = () => {
+  const {data: { latestPublications: publications } = {}, loading} = useQuery(LATEST)
 
-  return {
-    props: {
-      publications: data.latestPublications,
-    },
- };
-}
+  if (loading || !publications) return <Layout loading/>
 
-const HomePage = ({ publications }) => {
   const posts = publications.map(({
     _id,
     title,
@@ -49,24 +37,24 @@ const HomePage = ({ publications }) => {
     createdAt,
     topic,
   }) =>
-    <>
+    <div key={_id}>
       <PostItem
         id={_id}
-        username={user.username}
+        username={user?.username}
         title={title}
-        image={image.image}
-        date={new Date(Date(createdAt))}
-        topic={topic.title}
+        image={image}
+        date={new Date(Number(createdAt))}
+        topic={topic?.title}
         content={text}
       ></PostItem>
 
       <hr></hr>
-    </>
+    </div>
   )
   
   return (
     <>
-      <Layout role="user">
+      <Layout>
         { posts }
       </Layout>
 

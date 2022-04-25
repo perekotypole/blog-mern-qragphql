@@ -3,28 +3,26 @@ import { userModel } from '../../models'
 
 const resolvers = {
   Query: {
-    findUser: (root: any, { id }) => new Promise((resolve, reject) => {
-      User.findOne(
-        { _id: id },
+    ownProfile: (root: any, data, { userID }) => new Promise((resolve, reject) => {
+      if (!userID) reject()
+
+      User.findById(userID,
         (err: any, res: userModel) => {
           if (err) reject(err)
           else resolve(res)
         },
       )
-    }),
-  },
-  Mutation: {
-    createUser: (root: any, { user }) => {
-      const { ...rest } = user
-      const newUser = new User({ ...rest })
+    }).catch(err => console.error(`Error: ${err}`)),
+    username: (root: any, data, { userID }) => new Promise((resolve, reject) => {
+      if (!userID) reject()
 
-      return new Promise((resolve, reject) => {
-        newUser.save((err: any, res: userModel) => {
+      User.findById(userID,
+        (err: any, res: userModel) => {
           if (err) reject(err)
-          else resolve(res)
-        })
-      })
-    },
+          else resolve(res?.username)
+        },
+      )
+    }).catch(err => console.error(`Error: ${err}`)),
   },
 }
 export default resolvers

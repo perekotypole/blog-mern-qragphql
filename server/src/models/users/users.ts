@@ -10,4 +10,5 @@ export type userModel = {
   bio: string,
   paymant: string,
   contact: string,
+  created_at: Date,
 }

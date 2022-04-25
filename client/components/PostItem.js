@@ -16,7 +16,6 @@ const style = () => ({
     float: 'left',
     fontWeight: '1000',
     marginRight: '.5em',
-    marginTop: '.5em',
   },
 })
 
@@ -36,47 +35,56 @@ const PostItem = ({
 }) => (
   <>
     <div className='post'>
-      {
-        avatar ?
-        <Avatar {...style()} alt={username} src={avatar} /> :
-        <Avatar {...style()} {...stringAvatar(username)}></Avatar>
-      }
+      <div>
+        {
+          avatar ?
+          <Avatar {...style()} alt={username} src={avatar} /> :
+          <Avatar {...style()} {...stringAvatar(username)}></Avatar>
+        }
 
-      <Stack alignItems="center" direction="row" spacing={2}>
-        <div className='username'>{`@${username}`}</div>
+        <Stack alignItems="center" direction="row" spacing={2}>
+          <div className='username'>{`@${username}`}</div>
 
-        <div className='date'>{date.toLocaleString()}</div>
+          <div className='date'>{date.toLocaleString()}</div>
 
-        <Chip
-          label={topic}
-          sx={{
-            bgcolor: deepPurple[500],
-            color: '#fff',
-            padding: '0 .5em',
-            letterSpacing: '.3em'
-          }}/>
-      </Stack>
+          {topic && 
+            <Chip
+              label={topic}
+              sx={{
+                bgcolor: deepPurple[500],
+                color: '#fff',
+                padding: '0 .5em',
+                letterSpacing: '.3em'
+              }}/>
+          }
+        </Stack>
 
+        <Link passHref href="/post/[user]/[id]" as={`/post/@${username}/${id}`}>
+          <div className='title'>{title}</div>
+        </Link>
+
+        <div className='content'>
+          {content}
+        </div>
+      </div>
       {
         !image || (
           <div className='image'>
             <Card rounded>
-              <Image alt='post image' src={image} width={160} height={120}></Image>
+              <div><img loading="lazy" alt='post image' src={image} width={160} height={120}></img></div>
             </Card>
           </div>
         )
       }
-
-      <Link passHref href="/post/[user]/[id]" as={`/post/@${username}/${id}`}>
-        <div className='title'>{title}</div>
-      </Link>
-
-      <div className='content'>
-        {content}
-      </div>
     </div>
 
+
     <style jsx>{`
+      .post {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+      }
       .username {
         font-weight: 900;
       }
@@ -92,7 +100,6 @@ const PostItem = ({
       }
 
       .image {
-        float: right;
         margin-top: 5px;
       }
     `}</style>

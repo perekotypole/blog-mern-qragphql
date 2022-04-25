@@ -15,4 +15,8 @@ export const commentSchema = new Schema({
     type: String,
     required: 'Comment is required',
   },
+  createdAt: {
+    type: Date,
+    default: () => new Date()
+  },
 })

@@ -3,4 +3,5 @@ export type commentModel = {
   user: string;
   publication: string;
   content: string;
+  createdAt: string;
 }

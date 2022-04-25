@@ -47,7 +47,7 @@ const Comment = ({
         {content}
       </div>
 
-      <Reactions></Reactions>
+      {/* <Reactions></Reactions> */}
     </div>
 
     <style jsx>{`

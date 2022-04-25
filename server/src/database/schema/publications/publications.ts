@@ -1,21 +1,5 @@
 import { Schema } from 'mongoose'
 
-const Content = new Schema({
-  template: {
-    type: String,
-    required: 'Template is required',
-    enum: ['paragraph', 'list', 'tabel', 'image', 'subtitle'],
-  },
-  params: {
-    type: Map,
-    of: String,
-  },
-  data: {
-    type: Schema.Types.Mixed,
-    required: 'Content data is required',
-  },
-})
-
 export const publicationSchema = new Schema({
   title: {
     type: String,
@@ -30,7 +14,7 @@ export const publicationSchema = new Schema({
     ref: 'User',
   },
   content: {
-    type: [Content],
+    type: String,
     required: true,
   },
   createdAt: {
@@ -43,7 +27,7 @@ export const publicationSchema = new Schema({
   },
   topic: {
     type: Schema.Types.ObjectId,
-    required: true,
     ref: 'Topic',
   },
 })
+publicationSchema.index({ title: 'text', content: 'text' }, { weights: { title: 2, content: 1 } });

@@ -1,9 +1,11 @@
 import React from 'react'
 import MButton from '@mui/material/Button'
 
-const Button = ({ children }) => (
+const Button = ({ children, onClick, type }) => (
   <>
     <MButton
+      onClick={onClick}
+      type={type}
       variant="contained"
       sx={{
         fontWeight: '900',

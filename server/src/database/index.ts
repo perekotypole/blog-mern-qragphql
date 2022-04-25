@@ -23,6 +23,7 @@ mongoose.connect(environment[env].dbString, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useCreateIndex: true,
+  useFindAndModify: false,
 })
 
 const db = mongoose.connection
@@ -30,9 +31,10 @@ db.on('error', () => {
   console.error('Error while connecting to DB')
 })
 
-export const User = mongoose.model('User', userSchema, 'users')
+export const User = mongoose.model('User', userSchema, 'users');
 export const Topic = mongoose.model('Topic', topicSchema, 'topics')
-export const Publication = mongoose.model('Publication', publicationSchema, 'publications')
+export const Publication = mongoose.model('Publication', publicationSchema, 'publications');
+Publication.createIndexes()
 
 export const UserBan = mongoose.model('UserBan', userBanSchema, 'user_bans')
 export const Following = mongoose.model('Following', followingSchema, 'followings')

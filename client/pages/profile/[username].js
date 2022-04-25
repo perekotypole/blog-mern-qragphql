@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react'
-import { gql, useLazyQuery, useQuery } from "@apollo/client";
+import React from 'react'
+import { gql, useQuery } from "@apollo/client";
 
 import Layout from '../../components/Layout'
 import PostItem from '../../components/PostItem'
 import Button from '../../components/Button'
 
-import { Avatar, Link, CircularProgress } from '@mui/material';
+import { Avatar, Link } from '@mui/material';
 import { deepPurple } from '@mui/material/colors';
 import EditIcon from '@mui/icons-material/Edit';
 
@@ -18,25 +18,6 @@ const PROFILE = gql`
       bio,
       contact,
       createdAt
-    }
-  }
-`
-
-const PUBLICATIONS = gql`
-  query ($data: String) {
-    profilePublications (data: $data) {
-      _id,
-      title,
-      user {
-        username
-      },
-      image,
-      text,
-      createdAt,
-      views,
-      topic {
-        title
-      }
     }
   }
 `
@@ -56,46 +37,39 @@ const stringAvatar = (name) => ({
   children: `${name.split(' ')[0][0]}`,
 })
 
-const ProfilePage = () => {
-  const { data: { ownProfile: profile } = {}, loading: profileLoading } = useQuery(PROFILE)
-  const [getPublications, { data: { profilePublications: publications } = {}, loading: publicationsLoading }] =
-    useLazyQuery(PUBLICATIONS)
+const ProfilePage = ({ publications }) => {
+  // const posts = publications.map(({
+  //   _id,
+  //   title,
+  //   user,
+  //   image,
+  //   text,
+  //   createdAt,
+  //   topic,
+  // }) =>
+  //   <>
+  //     <PostItem
+  //       key={_id}
+  //       id={_id}
+  //       username={user.username}
+  //       title={title}
+  //       image={image.image}
+  //       date={new Date(Date(createdAt))}
+  //       topic={topic.title}
+  //       content={text}
+  //     ></PostItem>
 
-  useEffect(() => {
-    profile?._id && (() => {
-      getPublications({ variables: { userID: profile._id }})
-    })()
-  }, [profile]);
+  //     <hr></hr>
+  //   </>
+  // )
 
-  if (!profile || profileLoading) return <>
+  const { data, loading: profileLoading } = useQuery(PROFILE)
+
+  if (!data || profileLoading) return <>
     <Layout loading={true}></Layout>
   </>
 
-  const posts = publications ? publications.map(({
-    _id,
-    title,
-    user,
-    image,
-    text,
-    createdAt,
-    topic,
-  }) =>
-    <>
-      <PostItem
-        key={_id}
-        id={_id}
-        username={user.username}
-        title={title}
-        image={image}
-        date={new Date(Date(createdAt))}
-        topic={topic?.title}
-        content={text}
-      ></PostItem>
-
-      <hr></hr>
-    </>
-  ): null
-
+  const { ownProfile: profile } = data
   return (
     <>
       <Layout>
@@ -109,6 +83,8 @@ const ProfilePage = () => {
             
             <div className='row'>
               <div className='username'>@{ profile.username }</div>
+              
+              <Button>follow</Button>
             </div>
 
             <div className='bio'>{profile.bio}</div>
@@ -120,20 +96,15 @@ const ProfilePage = () => {
             </Link>
 
             <div className='info'>
-              <div className='date'><span>date of registration: </span>{new Date(Date(profile.createdAt)).toLocaleDateString()}</div>
-              <div className='publications'><span>publications: </span>{publications?.length || '0'}</div>
+              <div className='date'><span>date of registration: </span>{new Date(profile.createdA).toLocaleDateString()}</div>
+              <div className='publications'><span>publications: </span>{profile.publications}</div>
             </div>
 
-            {
-              profile.contact &&
-              <>
-                <div className='contact'>
-                  <Link sx={{ color: '#ffffff' }} href={profile.contact}>
-                    <Button>contact</Button>
-                  </Link>
-                </div>
-              </>
-            }
+            <div className='contact'>
+            <Link sx={{ color: '#ffffff' }} href={profile.contact}>
+              <Button>contact</Button>
+            </Link>
+            </div>
           </div>
         </div>
 
@@ -142,18 +113,14 @@ const ProfilePage = () => {
         <div className='publications'>
           <h2 className='title upper'>Publications</h2>
 
-          { publications && publications.length ?
-            posts :
-            (publicationsLoading ?
-              (<CircularProgress color="secondary" />) :
-              (<h2 style={{ color: '#cccccc' }}>No publication</h2>)) }
+          {/* { posts } */}
         </div>
       </Layout>
 
       <style jsx>{`
         .profile {
           display: grid;
-          grid-template-columns: 4fr 3fr;
+          grid-template-columns: 5fr 4fr;
           gap: 25px;
         }
 
@@ -165,7 +132,6 @@ const ProfilePage = () => {
 
         .username {
           font-weight: 1000;
-          font-size: 1.2em;
         }
 
         .row {

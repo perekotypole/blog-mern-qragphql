@@ -34,7 +34,7 @@ const typeDefs = gql`
     title: String,
     user: User,
     text: String,
-    image: Images,
+    image: String,
     createdAt: String,
     views: Int,
     topic: Topic,
@@ -44,14 +44,29 @@ const typeDefs = gql`
     _id: ID,
     title: String,
     user: User,
-    content: [Content],
+    content: String,
     createdAt: String,
     views: Int,
+    saved: Boolean,
     topic: Topic,
   }
-  
+
+  input PublicationInput {
+    title: String,
+    user: String,
+    content: String,
+    topic: String,
+  }
+
   extend type Query {
     latestPublications: [ShortPublication]
+    profilePublications(data: String): [ShortPublication]
+    publication(id: String): Publication
+  }
+
+  extend type Mutation {
+    publish(data: PublicationInput): String
+    addViews(id: String): Int
   }
 `
 export default typeDefs
