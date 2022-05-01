@@ -6,5 +6,6 @@ import publications from './publications/publications'
 import comments from './publications/comments'
 import saved from './users/saved'
 import search from './search'
+import reactions from './publications/reactions'
 
-export default [defaultSchema, users, autorization, topics, publications, comments, saved, search]
+export default [defaultSchema, users, autorization, topics, publications, comments, saved, search, reactions]

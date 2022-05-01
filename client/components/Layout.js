@@ -28,7 +28,7 @@ import { CircularProgress } from '@mui/material'
 
 const ROLE = gql`query { role }`
 
-const Layout = ({ children, sidebar, loading: pageLoading = false }) => {
+const Layout = ({ children, sidebar, loading: pageLoading = false, adminPanel = true }) => {
   const [cookie, setCookie, removeToken] = useCookies(['token'])
   const [getRole, { data, loading }] = useLazyQuery(ROLE)
 
@@ -205,6 +205,30 @@ const Layout = ({ children, sidebar, loading: pageLoading = false }) => {
             </Paper>
 
             {sidebar}
+
+            {
+              adminPanel && ((role) => {
+                switch (role) {
+                  case 'admin':
+                  case 'moderator':
+                    return (
+                      <Card>
+                        <Content>
+                          <h3>Admin Panel</h3>
+                          <hr></hr>
+                          <div className='admin-menu'>
+                            <Link href={'/admin/users'} passHref><div style={{ fontWeight: '1000', textTransform: 'uppercase', padding: '5px 0' }}>Users list</div></Link>
+                            <Link href={'/admin/posts'} passHref><div style={{ fontWeight: '1000', textTransform: 'uppercase', padding: '5px 0' }}>Post list</div></Link>
+                            {role === 'admin' && <>
+                              {/* <Link href={'/admin/posts'} passHref><div style={{ fontWeight: '1000', textTransform: 'uppercase', padding: '5px 0' }}>Info pages</div></Link> */}
+                            </>}
+                          </div>
+                        </Content>
+                      </Card>
+                    )
+                }
+              })(data?.role)
+            }
             
             <Card rounded>
               <div><img loading="lazy" alt='banner' src={'/images/plug2.png'} width={270} height={300}></img></div>
@@ -246,6 +270,12 @@ const Layout = ({ children, sidebar, loading: pageLoading = false }) => {
           margin-left: auto;
           display: flex;
           justify-content: space-between;
+        }
+
+        .admin-menu {
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
         }
 
         .footer-menu {

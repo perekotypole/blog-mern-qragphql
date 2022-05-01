@@ -6,8 +6,10 @@ import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import { deepPurple } from '@mui/material/colors';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 import Card from './Card';
+import { Tooltip, Zoom } from '@mui/material';
 
 const style = () => ({
   sx: {
@@ -28,6 +30,7 @@ const PostItem = ({
   title,
   date,
   username,
+  role = 'user',
   avatar,
   topic,
   image,
@@ -43,7 +46,20 @@ const PostItem = ({
         }
 
         <Stack alignItems="center" direction="row" spacing={2}>
-          <div className='username'>{`@${username}`}</div>
+          <div className='username'>
+            <Link passHref href="/profile/[username]" as={`/profile/@${username}`}>{`@${username}`}</Link>
+            {
+              role === 'moderator' || role === 'admin' &&
+              <Tooltip title={role} placement="top" TransitionComponent={Zoom} arrow>
+                <CheckCircleOutlineIcon
+                  sx={{
+                    height: '.7em', width: '.7em',
+                    color: '#942fd2', cursor: 'pointer'
+                  }}></CheckCircleOutlineIcon>
+              </Tooltip>
+            }
+          </div>
+
 
           <div className='date'>{date.toLocaleString()}</div>
 
@@ -87,6 +103,7 @@ const PostItem = ({
       }
       .username {
         font-weight: 900;
+        display: flex; align-items: center;
       }
 
       .date {

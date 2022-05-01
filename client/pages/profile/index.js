@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { gql, useLazyQuery, useQuery } from "@apollo/client";
+import { gql, useLazyQuery, useMutation, useQuery } from "@apollo/client";
 
 import Layout from '../../components/Layout'
 import PostItem from '../../components/PostItem'
@@ -8,6 +8,7 @@ import Button from '../../components/Button'
 import { Avatar, Link, CircularProgress } from '@mui/material';
 import { deepPurple } from '@mui/material/colors';
 import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const PROFILE = gql`
   query {
@@ -23,12 +24,13 @@ const PROFILE = gql`
 `
 
 const PUBLICATIONS = gql`
-  query ($data: String) {
-    profilePublications (data: $data) {
+  query ($userID: String) {
+    profilePublications (userID: $userID) {
       _id,
       title,
       user {
-        username
+        username,
+        role
       },
       image,
       text,
@@ -38,6 +40,12 @@ const PUBLICATIONS = gql`
         title
       }
     }
+  }
+`
+
+const REMOVE_PUBLICATIONS = gql`
+  mutation ($id: String) {
+    removePublication (id: $id)
   }
 `
 
@@ -58,11 +66,12 @@ const stringAvatar = (name) => ({
 
 const ProfilePage = () => {
   const { data: { ownProfile: profile } = {}, loading: profileLoading } = useQuery(PROFILE)
-  const [getPublications, { data: { profilePublications: publications } = {}, loading: publicationsLoading }] =
-    useLazyQuery(PUBLICATIONS)
+  const [getPublications, { data: { profilePublications: publications } = {}, loading: publicationsLoading }] = useLazyQuery(PUBLICATIONS)
+  const [removePublication, { loading: removingPublication }] = useMutation(REMOVE_PUBLICATIONS)
 
   useEffect(() => {
     profile?._id && (() => {
+      console.log(profile._id);
       getPublications({ variables: { userID: profile._id }})
     })()
   }, [profile]);
@@ -80,20 +89,33 @@ const ProfilePage = () => {
     createdAt,
     topic,
   }) =>
-    <>
-      <PostItem
-        key={_id}
-        id={_id}
-        username={user.username}
-        title={title}
-        image={image}
-        date={new Date(Date(createdAt))}
-        topic={topic?.title}
-        content={text}
-      ></PostItem>
+  <div key={_id}>
+    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+      <Link href={`/post/edit/${_id}`}>
+        <EditIcon sx={{ cursor: 'pointer', color: '#000' }}></EditIcon>
+      </Link>
 
-      <hr></hr>
-    </>
+      <DeleteIcon
+        sx={{ cursor: 'pointer' }}
+        onClick={() => {
+          removePublication({ variables: { id: _id }});
+          getPublications({ variables: { userID: profile._id }});
+        }}></DeleteIcon>
+    </div>
+
+    <PostItem
+      id={_id}
+      username={user?.username}
+      role={user?.role}
+      title={title}
+      image={image}
+      date={new Date(Number(createdAt))}
+      topic={topic?.title}
+      content={text}
+    ></PostItem>
+
+    <hr></hr>
+  </div>
   ): null
 
   return (
@@ -120,7 +142,7 @@ const ProfilePage = () => {
             </Link>
 
             <div className='info'>
-              <div className='date'><span>date of registration: </span>{new Date(Date(profile.createdAt)).toLocaleDateString()}</div>
+              <div className='date'><span>date of registration: </span>{new Date(Number(profile.createdAt)).toLocaleDateString()}</div>
               <div className='publications'><span>publications: </span>{publications?.length || '0'}</div>
             </div>
 

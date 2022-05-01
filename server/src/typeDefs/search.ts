@@ -5,6 +5,7 @@ const typeDefs = gql`
     publications: [ShortPublication],
     users: [User],
   }
+  
   extend type Query {
     search(query: String): Search
   }

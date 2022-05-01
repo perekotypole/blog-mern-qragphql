@@ -22,23 +22,23 @@ const resolvers = {
       
       User.findOne(
         { username, password: hashpass },
-        (err: any, res: userModel) => {
-          if (err) reject(err)
-          if (!res) reject()
+        (err: any, res) => {
+          if (err) return reject(err)
+          if (!res) return reject()
 
-          const token = generateToken(res.id, res.password)
-          resolve({ token })
+          const token = generateToken(res._id, res.password)
+          return resolve({ token })
         },
-      )
+      ).catch(err => { throw new Error(err) })
     }).catch(err => console.error(`Error: ${err}`)),
     role: (root: any, { data }, { userID }) => new Promise((resolve, reject) => {
-      if (!userID) resolve('guest')
+      if (!userID) return resolve('guest')
       
       User.findById(userID,
         (err: any, res: userModel) => {
-          if (err || !res) resolve('guest')
+          if (err || !res) return resolve('guest')
           
-          resolve(res?.role || 'guest')
+          return resolve(res?.role || 'guest')
         },
       )
     }).catch(err => console.error(`Error: ${err}`)),
@@ -49,11 +49,11 @@ const resolvers = {
       const newUser = new User({ ...rest, password: rest.password && Md5.hashStr(rest.password), role: 'user' })
 
       newUser.save((err: any, res: userModel) => {
-        if (err) reject(err)
-        if (!res) reject()
+        if (err) return reject(err)
+        if (!res) return reject()
         
         const token = generateToken(newUser._id, Md5.hashStr(newUser.password))
-        resolve({ token })
+        return resolve({ token })
       })
     }).catch(err => console.error(`Error: ${err}`)),
   },

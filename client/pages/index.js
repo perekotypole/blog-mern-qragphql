@@ -10,7 +10,8 @@ const LATEST = gql`
       _id,
       title,
       user {
-        username
+        username,
+        role
       },
       image,
       text,
@@ -41,6 +42,7 @@ const HomePage = () => {
       <PostItem
         id={_id}
         username={user?.username}
+        role={user?.role}
         title={title}
         image={image}
         date={new Date(Number(createdAt))}

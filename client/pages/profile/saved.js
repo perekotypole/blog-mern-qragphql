@@ -10,7 +10,8 @@ query {
     _id,
     title,
     user {
-      username
+      username,
+      role
     },
     image,
     text,
@@ -36,19 +37,20 @@ const SavedPage = () => {
     createdAt,
     topic,
   }) =>
-    <div key={_id}>
-      <PostItem
-        id={_id}
-        username={user?.username}
-        title={title}
-        image={image}
-        date={new Date(Number(createdAt))}
-        topic={topic?.title}
-        content={text}
-      ></PostItem>
+  <div key={_id}>
+    <PostItem
+      id={_id}
+      username={user?.username}
+      role={user?.role}
+      title={title}
+      image={image}
+      date={new Date(Number(createdAt))}
+      topic={topic?.title}
+      content={text}
+    ></PostItem>
 
-      <hr></hr>
-    </div>
+    <hr></hr>
+  </div>
   )
   return (
     <>

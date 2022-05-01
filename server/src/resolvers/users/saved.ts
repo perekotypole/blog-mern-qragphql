@@ -14,7 +14,7 @@ const resolvers = {
       }).populate('user').exec((err, res) => {
         if (err) return reject(err)
         
-        resolve(res.map(el => {
+        return resolve(res.map(el => {
           const result = el.publication
 
           const text = `${JSON.parse(result.content).blocks.find(element => element.type === 'unstyled' && element.text)?.text?.slice(0, 100)}...`
@@ -37,12 +37,12 @@ const resolvers = {
         if (res) {
           SavedPublication.findOneAndDelete({ user: userID, publication: publicationID }, (_err, _res) => {
             if (_err) return reject()
-            resolve (false)
+            return resolve (false)
           })
         } else {
           SavedPublication.create({ user: userID, publication: publicationID }, (_err, _res: savedPublicationModel) => {
             if (_err) return reject()
-            resolve (true)
+            return resolve (true)
           })
         }
       })

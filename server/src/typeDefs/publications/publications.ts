@@ -58,15 +58,26 @@ const typeDefs = gql`
     topic: String,
   }
 
+  input UpdatePublicationInput {
+    title: String,
+    content: String,
+    createdAt: String,
+    views: Int,
+    topic: String,
+    user: String,
+  }
+
   extend type Query {
-    latestPublications: [ShortPublication]
-    profilePublications(data: String): [ShortPublication]
-    publication(id: String): Publication
+    latestPublications: [ShortPublication],
+    profilePublications(userID: String): [ShortPublication],
+    publication(id: String): Publication,
   }
 
   extend type Mutation {
-    publish(data: PublicationInput): String
-    addViews(id: String): Int
+    publish(data: PublicationInput): String,
+    updatePublish(id: String, data: UpdatePublicationInput): Boolean,
+    addViews(id: String): Int,
+    removePublication(id: String): Boolean,
   }
 `
 export default typeDefs

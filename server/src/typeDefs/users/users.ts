@@ -22,7 +22,14 @@ const typeDefs = gql`
 
   extend type Query {
     ownProfile: User
+    profile (username: String): User
+    profiles: [User]
     username: String
+  }
+
+  extend type Mutation {
+    changeRole (user: String, role: String): Boolean 
+    removeUser(id: String): Boolean,
   }
 `
 export default typeDefs

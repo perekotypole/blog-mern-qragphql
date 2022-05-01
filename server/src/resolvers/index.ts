@@ -4,5 +4,6 @@ import publications from './publications/publiacations'
 import comments from './publications/comments'
 import saved from './users/saved'
 import search from './search'
+import reactions from './publications/reactions'
 
-export default [users, autorization, publications, comments, saved, search]
+export default [users, autorization, publications, comments, saved, search, reactions]

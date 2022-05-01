@@ -6,7 +6,7 @@ const Card = ({ children, rounded = false, fit = false, sx = {} }) => (
       className={`card`}
       style={{
         display: fit ? 'inline-block' : 'block',
-        borderRadius: rounded || '20px',
+        borderRadius: !rounded || '20px',
         ...sx
       }}      
       >

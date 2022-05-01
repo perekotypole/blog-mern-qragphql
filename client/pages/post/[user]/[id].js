@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useCookies } from 'react-cookie'
 
@@ -7,14 +8,17 @@ import Button from "../../../components/Button"
 import Comment from "../../../components/Comment"
 import Reactions from "../../../components/Reactions"
 
+import { gql, useLazyQuery, useMutation, useQuery } from '@apollo/client'
+
 import draftToHtml from 'draftjs-to-html';
 import styled from 'styled-components'
 
-import { Avatar, TextField } from "@mui/material"
+import { Avatar, TextField, Tooltip, Zoom } from "@mui/material"
 import Bookmark from "@mui/icons-material/Bookmark"
 import BookmarkBorderOutlinedIcon from '@mui/icons-material/BookmarkBorderOutlined';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+
 import { deepPurple } from "@mui/material/colors"
-import { gql, useLazyQuery, useMutation, useQuery } from '@apollo/client'
 
 const PUBLICATION = gql`
   query ($id: String) {
@@ -24,6 +28,7 @@ const PUBLICATION = gql`
       user {
         _id,
         username,
+        role,
         bio,
         image,
         createdAt
@@ -75,6 +80,22 @@ const SAVE = gql`
   }
 `;
 
+const SET_REACTION = gql`
+mutation ($postID: String, $reaction: Reactions) {
+  setReaction(postID: $postID, reaction: $reaction)
+}
+`;
+
+const REACTIONS = gql`
+query ($postID: String) {
+  reactions (postID: $postID){
+    label,
+    number,
+    selected
+  }
+}
+`;
+
 const style = () => ({
   sx: {
     bgcolor: deepPurple[500],
@@ -92,13 +113,18 @@ const stringAvatar = (name) => ({
 const AdditionalBlock = ({
   avatar,
   username,
+  role,
   published,
   views,
   bio,
   saved, onSave = () => {},
+  postID
 }) => {
   const [cookie] = useCookies(['token'])
   const [savedValue, setSavedValue] = useState(saved);
+
+  const { data: { reactions } = {} } = useQuery(REACTIONS, { variables: { postID } })
+  const [setReaction] = useMutation(SET_REACTION)
 
   return (
     <>
@@ -113,7 +139,19 @@ const AdditionalBlock = ({
               }
             </div>
             
-            <div className="username">@{username}</div>
+            <div className='username'>
+              <Link passHref href="/profile/[username]" as={`/profile/@${username}`}>{`@${username}`}</Link>
+              {
+                role === 'moderator' || role === 'admin' &&
+                <Tooltip title={role} placement="top" TransitionComponent={Zoom} arrow>
+                  <CheckCircleOutlineIcon
+                    sx={{
+                      height: '.7em', width: '.7em',
+                      color: '#942fd2', cursor: 'pointer'
+                    }}></CheckCircleOutlineIcon>
+                </Tooltip>
+              }
+            </div>
           </div>
 
           {/* <Button>follow</Button> */}
@@ -134,7 +172,10 @@ const AdditionalBlock = ({
           </div>
         </div>
 
-        {/* <Reactions></Reactions> */}
+        <Reactions
+          key={postID}
+          initReactions={reactions}
+          onChange={(reaction) => {setReaction({ variables: { postID, reaction }})}}></Reactions>
       </div>
 
       <style jsx>{`
@@ -245,14 +286,16 @@ const PostPage = () => {
 
     return (
       <>
-        <Layout sidebar={
+        <Layout adminPanel={false} sidebar={
           <AdditionalBlock
             username={publication.user.username}
+            role={publication.user?.role}
             published={new Date(Number(publication.user.createdAt))}
             views={newViews || publication.views}
             bio={publication.user.bio}
             saved={publication.saved}
             onSave={() => { toggleSaved({ variables: { publicationID: postID } }) }}
+            postID={postID}
           ></AdditionalBlock>
         }>
           <h2 className="title">{publication.title}</h2>

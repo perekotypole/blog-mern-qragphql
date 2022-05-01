@@ -10,7 +10,7 @@ const resolvers = {
         { sort: { 'createdAt' : -1 } },
       ).populate (['user']).exec((err: any, res: any) => {
         if (err) return reject(err)
-        resolve(res)
+        return resolve(res)
       })
     }).catch(err => console.error(`Error: ${err}`)),
   },
@@ -26,7 +26,7 @@ const resolvers = {
         Comment.findById(newComment._id)
           .populate(['user'])
           .exec((_, _res) => {
-            resolve(_res)
+            return resolve(_res)
           });
       })
     }).catch(err => console.error(`Error: ${err}`)),

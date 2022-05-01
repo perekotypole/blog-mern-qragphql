@@ -12,7 +12,10 @@ import Card from './Card';
 import Content from './Content';
 
 const EditorComponent = (props) => {
-  const [editorState, setEditorState] = useState(EditorState.createEmpty());
+  const [editorState, setEditorState] = useState(props.initialContent ?
+    EditorState.createWithContent(convertFromRaw(props.initialContent)) :
+    EditorState.createEmpty()
+  );
 
   const onEditorStateChange = (editorState) => {
     setEditorState(editorState)
@@ -27,6 +30,7 @@ const EditorComponent = (props) => {
             editorState={editorState}
             toolbarClassName="toolbar-class"
             editorClassName="editor-class"
+            initialContent={props.initialContent}
             onEditorStateChange={onEditorStateChange}
             toolbar={{
               options: ['blockType', 'list', 'link', 'emoji', 'image', 'history'],
