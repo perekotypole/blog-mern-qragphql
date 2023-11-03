@@ -64,7 +64,12 @@ const ProfilePage = () => {
   const router = useRouter()
   const { username } = router.query
 
-  const { data: { profile } = {}, loading: profileLoading } = useQuery(PROFILE, { variables: { username: username && username?.split('@')[1] } })
+  const { data: { profile } = {}, loading: profileLoading } = useQuery(PROFILE, {
+    variables: { username: username && username?.split('@')[1] },
+    onError: (error) => {
+      console.log(error.message);
+    }
+  })
   const [getPublications, { data: { profilePublications: publications } = {}, loading: publicationsLoading }] =
     useLazyQuery(PUBLICATIONS)
 

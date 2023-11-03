@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { gql, useLazyQuery, useMutation, useQuery } from "@apollo/client";
 
 import Layout from '../../components/Layout'
@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { Avatar, Box } from '@mui/material';
 import { deepPurple } from '@mui/material/colors';
 import DeleteIcon from '@mui/icons-material/Delete';
+import Error from '../../components/Error';
 
 const USERS = gql`
 query {
@@ -28,13 +29,11 @@ mutation ($userID: String, $role: String) {
   changeRole (user: $userID, role: $role)
 }
 `
-
 const REMOVE_USER = gql`
   mutation ($id: String) {
     removeUser (id: $id)
   }
 `
-
 const ROLE = gql`query { role }`
 
 const style = () => ({
@@ -52,10 +51,55 @@ const stringAvatar = (name) => ({
 })
 
 const AdminUsersPage = () => {
-  const { data: { role } = {} } = useQuery(ROLE)
-  const [getUsers, { data, loading, called }] = useLazyQuery(USERS)
-  const [changeRole, { loading: changingRole }] = useMutation(CHANGE_ROLE)
-  const [removeUser] = useMutation(REMOVE_USER)
+  const [errorMessage, setError] = useState();
+  const [rows, setRows] = useState([])
+
+  const { data: { role = 'guest' } = { } } = useQuery(ROLE, {
+    onCompleted: () => {
+      setError()
+    },
+    onError: (error) => {
+      console.log(error.message);
+    }
+  })
+  const [getUsers, { data, loading, called }] = useLazyQuery(USERS, {
+    onCompleted: (data) => {
+      setError()
+
+      if (data?.profiles)
+      setRows(data.profiles.map(el => ({
+        id: el._id,
+        avatar: el.image,
+        username: el.username,
+        role: el.role,
+        created: el.createdAt,
+        email: el.email,
+        contact: el.contact,
+        paymant: el.paymant,
+      })))
+    },
+    onError: (error) => {
+      console.log(error.message);
+    }
+  })
+  const [changeRole, { loading: changingRole }] = useMutation(CHANGE_ROLE, {
+    onCompleted: () => {
+      setError()
+      getUsers()
+    },
+    onError: (error) => {
+      console.log(error.message);
+    }
+  })
+  const [removeUser, { loading: removingUser }] = useMutation(REMOVE_USER, {
+    onCompleted: () => {
+      setError()
+      getUsers()
+    },
+    onError: (error) => {
+      console.log(error.message);
+    }
+  })
 
   if (!called) getUsers()
 
@@ -65,6 +109,7 @@ const AdminUsersPage = () => {
     width: 50,
     getActions: (params) => [
       <GridActionsCellItem
+        key={'detete'}
         icon={<DeleteIcon />}
         label="Delete"
         onClick={() => {
@@ -120,26 +165,8 @@ const AdminUsersPage = () => {
     },
     deleteUserField
   ];
-  
-  const [rows, setRows] = useState([])
 
-  useEffect(() => {
-    if (data?.profiles)
-      setRows(data.profiles.map(el => ({
-        id: el._id,
-        avatar: el.image,
-        username: el.username,
-        role: el.role,
-        created: el.createdAt,
-        email: el.email,
-        contact: el.contact,
-        paymant: el.paymant,
-      })))
-  }, [data]);
-
-  if (loading && !rows && rows.length) return <Layout loading/>
-
-  const handleRowEditCommit = React.useCallback(
+  const handleRowEditCommit = useCallback(
     ({ id: userID, field, value }) => {
       if (field === 'role') changeRole({ variables: {
         userID,
@@ -148,9 +175,11 @@ const AdminUsersPage = () => {
     }, []
   );
 
+  if (loading && !rows && rows.length) return <Layout loading/>
+
   return (
     <>
-      <Layout>
+      <Layout sidebar={<Error>{errorMessage}</Error>}>
         <Box
           sx={{
             '& .username': {
@@ -169,6 +198,7 @@ const AdminUsersPage = () => {
             columns={columns}
             pageSize={12}
             onCellEditCommit={handleRowEditCommit}
+            loading={loading || changingRole || removingUser}
           />
         </Box>
       </Layout>

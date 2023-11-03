@@ -12,16 +12,25 @@ const resolvers = {
         .sort({ score : { $meta : 'textScore' } })
         .populate (['user', 'topic']))
         .map((el) => {
-          const text = `${JSON.parse(el.content).blocks.find(element => element.type === 'unstyled' && element.text)?.text?.slice(0, 100)}...`
-          const image = (Object.values(JSON.parse(el.content).entityMap).find(element => (element as any).type === 'IMAGE') as any)?.data?.src
-  
-          delete el.content
-  
-          return({
-            ...el._doc,
-            text,
-            image,
-          });
+          try {
+            let content = JSON.parse(el?.content)
+            if (content && typeof content === 'string') content = JSON.parse(content)
+
+            const text = `${content?.blocks?.find(element => element.type === 'unstyled' && element.text)?.text?.slice(0, 100) || ''}...`
+            const image = (Object.values(content?.entityMap || []).find(element => (element as any).type === 'IMAGE') as any)?.data?.src
+    
+            delete el.content
+    
+            return({
+              ...el._doc,
+              text,
+              image,
+            });
+            
+          } catch (error) {
+            console.log(error)
+          }
+          
         })
         
         const resultUsers = await User.aggregate([

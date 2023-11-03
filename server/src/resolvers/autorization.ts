@@ -5,57 +5,99 @@ import { User } from '../database'
 import { userModel } from '../models'
 import { UserInputError } from 'apollo-server-express'
 
-const generateToken = async (userID: string, userKey: string) => {
-  const token: string = await jwt.sign(
-    { userID },
-    userKey,
-  )
-
-  return token
+const generateToken = (userID: string, userKey: string) => {
+  try {
+    const token: string = jwt.sign(
+      { userID },
+      userKey,
+    )
+    return token
+  } catch (error) {
+    console.log(error);
+    return null
+  }
 }
 
 const resolvers = {
   Query: {
-    login: (root: any, { data }) => new Promise((resolve, reject) => {      
-      const { username, password } = data
-      const hashpass = Md5.hashStr(password)
+    login: (root: any, { data }) => new Promise((resolve, reject) => {   
       
-      User.findOne(
-        { username, password: hashpass },
-        (err: any, res) => {
-          if (err) return reject(err)
-          if (!res) return reject()
+      try {
+        const { username, password } = data
+        if (!username || !password) return reject('Not all data entered')
 
-          const token = generateToken(res._id, res.password)
-          return resolve({ token })
-        },
-      ).catch(err => { throw new Error(err) })
-    }).catch(err => console.error(`Error: ${err}`)),
+        const hashpass = Md5.hashStr(password)
+        
+        User.findOne(
+          { username, password: hashpass },
+          (err: any, res) => {
+            try {
+              if (err) return reject(err)
+              if (!res) return reject('Сheck the entered data')
+    
+              const token = generateToken(res._id, res.password)
+              return resolve({ token })
+            } catch (error) {
+              reject(error)
+            }
+          },
+        )
+      } catch (error) {
+        reject(error)
+      }
+    }),
+
     role: (root: any, { data }, { userID }) => new Promise((resolve, reject) => {
       if (!userID) return resolve('guest')
+
+      try {
+        User.findById(userID,
+          (err: any, res: userModel) => {
+            if (err || !res) return resolve('guest')
+
+            try {
+              return resolve(res?.role || 'guest')
+            } catch (error) {
+              reject(error)
+            }
+            
+          },
+        )
+              
+      } catch (error) {
+        reject(error)
+      }
       
-      User.findById(userID,
-        (err: any, res: userModel) => {
-          if (err || !res) return resolve('guest')
-          
-          return resolve(res?.role || 'guest')
-        },
-      )
-    }).catch(err => console.error(`Error: ${err}`)),
+    }),
   },
+  
   Mutation: {
     registerUser: (root: any, { user }) => new Promise((resolve, reject) => {
-      const { ...rest } = user
-      const newUser = new User({ ...rest, password: rest.password && Md5.hashStr(rest.password), role: 'user' })
-
-      newUser.save((err: any, res: userModel) => {
-        if (err) return reject(err)
-        if (!res) return reject()
-        
-        const token = generateToken(newUser._id, Md5.hashStr(newUser.password))
-        return resolve({ token })
-      })
-    }).catch(err => console.error(`Error: ${err}`)),
+      try {
+        User.create(
+          { 
+            username: user.username,
+            email: user.email,
+            password: user.password && Md5.hashStr(user.password),
+            role: 'user'
+          },
+          (err: any, res) => {
+            try {
+              if (err) return reject(err)
+              if (!res) return reject()
+              
+              const token = generateToken(res._id, res.password)
+              
+              return resolve({ token })
+            } catch (error) {
+              reject(error)
+            }
+          },
+        )
+      } catch (error) {
+        reject(error)
+      }
+    })
   },
 }
 export default resolvers

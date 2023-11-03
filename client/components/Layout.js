@@ -30,7 +30,11 @@ const ROLE = gql`query { role }`
 
 const Layout = ({ children, sidebar, loading: pageLoading = false, adminPanel = true }) => {
   const [cookie, setCookie, removeToken] = useCookies(['token'])
-  const [getRole, { data, loading }] = useLazyQuery(ROLE)
+  const [getRole, { data: { role = 'guest' } = {}, loading }] = useLazyQuery(ROLE, {
+    onError: (error) => {
+      console.log(error.message);
+    }
+  })
 
   const router = useRouter()
 
@@ -145,7 +149,7 @@ const Layout = ({ children, sidebar, loading: pageLoading = false, adminPanel = 
                               </>
                             )
                         }
-                      })(data?.role)
+                      })(role)
                     }
                   </div>
                 </Content>
@@ -227,7 +231,7 @@ const Layout = ({ children, sidebar, loading: pageLoading = false, adminPanel = 
                       </Card>
                     )
                 }
-              })(data?.role)
+              })(role)
             }
             
             <Card rounded>
@@ -313,6 +317,10 @@ const Layout = ({ children, sidebar, loading: pageLoading = false, adminPanel = 
 
           .container {
             padding: 30px 25px;
+          }
+
+          img {
+            object-fit: cover;
           }
 
           hr {

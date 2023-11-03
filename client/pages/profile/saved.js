@@ -59,9 +59,6 @@ const SavedPage = () => {
 
         { posts }
       </Layout>
-
-      <style jsx>{`
-      `}</style>
     </>
   )
 }

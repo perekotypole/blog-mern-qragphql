@@ -19,5 +19,5 @@
         "@typescript-eslint/semi": ["error", "never"],
         "@typescript-eslint/naming-convention": 0
     }
-  }
+}
   

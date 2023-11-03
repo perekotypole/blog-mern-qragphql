@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { Box } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import Error from '../../components/Error';
 
 const PUBLICATIONS = gql`
 query {
@@ -34,8 +35,37 @@ const REMOVE_PUBLICATIONS = gql`
 `
 
 const AdminPostsPage = () => {
-  const [getPublications, { data, loading, called }] = useLazyQuery(PUBLICATIONS)
-  const [removePublication, { loading: removingPublication }] = useMutation(REMOVE_PUBLICATIONS)
+  const [errorMessage, setError] = useState()
+  const [rows, setRows] = useState([])
+
+  const [getPublications, { data, loading, called }] = useLazyQuery(PUBLICATIONS, {
+    onCompleted: (data) => {
+      setError()
+
+      if (data?.latestPublications)
+        setRows(data.latestPublications.map(el => ({
+          id: el._id,
+          title: el.title,
+          author: el.user?._id,
+          username: el.user?.username,
+          created: el.createdAt,
+          views: el.views,
+          topic: el.topic?.title,
+        })))
+    },
+    onError: (error) => {
+      setError(error.graphQLErrors)
+    }
+  })
+  const [removePublication, { loading: removingPublication }] = useMutation(REMOVE_PUBLICATIONS, {
+    onCompleted: () => {
+      setError()
+      getPublications()
+    },
+    onError: (error) => {
+      setError(error.graphQLErrors)
+    }
+  })
 
   if (!called) getPublications()
   
@@ -63,40 +93,27 @@ const AdminPostsPage = () => {
       width: 75,
       getActions: (params) => [
         <GridActionsCellItem
+          key={'edit'}
           icon={<Link href={{ pathname: `/post/edit/${params.row.id}`, query: { author: params.row.author } }}><EditIcon /></Link>}
           label="Edit"></GridActionsCellItem>,
         <GridActionsCellItem
+          key={'delete'}
           icon={<DeleteIcon />}
           label="Delete"
           onClick={() => {
             removePublication({ variables: { id: params.row.id }});
-            getPublications()
           }}
         />,
       ],
     }
   ];
-  
-  const [rows, setRows] = useState([])
-
-  useEffect(() => {
-    if (data?.latestPublications)
-      setRows(data.latestPublications.map(el => ({
-        id: el._id,
-        title: el.title,
-        author: el.user?._id,
-        username: el.user?.username,
-        created: el.createdAt,
-        views: el.views,
-        topic: el.topic?.title,
-      })))
-  }, [data]);
 
   if (loading && !rows && rows.length) return <Layout loading/>
 
   return (
     <>
-      <Layout>
+      <Layout sidebar={<Error>{errorMessage}</Error>}>
+
         <Box
           sx={{
             '& .post': {
@@ -109,6 +126,7 @@ const AdminPostsPage = () => {
             rows={rows}
             columns={columns}
             pageSize={12}
+            loading={loading || removingPublication}
           />
         </Box>
       </Layout>

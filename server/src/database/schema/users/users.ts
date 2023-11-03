@@ -33,7 +33,7 @@ export const userSchema = new Schema({
   password: {
     type: String,
     trim: true,
-    // required: 'Password is required',
+    required: 'Password is required',
     // minLength: [8, 'Password must have at least 8 characters'],
     // maxLength: [20, 'Password is too large. The maximum number of characters is 20'],
   },

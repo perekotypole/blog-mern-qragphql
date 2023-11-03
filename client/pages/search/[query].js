@@ -88,7 +88,7 @@ const SearchPage = () => {
     username,
     image,
   }) =>
-    <Link passHref href={'/profile/[username]'} as={`/profile/@${username}`}>
+    <Link key={_id} passHref href={'/profile/[username]'} as={`/profile/@${username}`}>
       <div key={_id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         {
           image ?

@@ -13,16 +13,20 @@ import resolvers from './resolvers'
 const app = express()
 
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: 'http://89.47.166.190:3000',
+  // origin: 'http://localhost:3000',
   credentials: true
 }))
 app.use(cookieParser())
 app.use(bodyParser.json())
 
+// створення Apollo серверу
 const server = new ApolloServer({
   typeDefs,
   resolvers,
   context: ({ req, res }) => {
+    console.log(req.cookies);
+    
     const token = req.cookies.token || '';
     const data = jwt.decode(token)
     

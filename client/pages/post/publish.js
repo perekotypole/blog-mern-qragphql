@@ -22,7 +22,11 @@ const PublishPage = () => {
   const [content, setContect] = useState()
 
   const [savePublication, { data: publicationId, loading: saveLoading }] = useMutation(PUBLISH)
-  const { data: { username } = {}, loading: userLoading } = useQuery(USERNAME)
+  const { data: { username } = {}, loading: userLoading } = useQuery(USERNAME, {
+    onError: (error) => {
+      console.log(error.message);
+    }
+  })
 
   const variables = {
     data: {

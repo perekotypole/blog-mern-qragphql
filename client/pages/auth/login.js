@@ -9,6 +9,7 @@ import Layout from "../../components/Layout"
 import Button from '../../components/Button'
 
 import { CircularProgress, TextField } from "@mui/material"
+import Error from '../../components/Error';
 
 const LOGIN = gql`
   query ($data: LoginInput) {
@@ -24,19 +25,41 @@ const LoginPage = () => {
   const [username, setUsername] = useState()
   const [password, setPassword] = useState()
 
+  const [errorMessage, setError] = useState()
+
   const [cookie, setCookie] = useCookies(["token"])
 
   const [
     getLogin, 
-    { loading, data, error }
+    { loading, error }
   ] = useLazyQuery(LOGIN, {
-    variables: {
-      data: {
-        username,
-        password,
+    onCompleted: (data) => {
+      if (data && data.login && data.login.token) {
+        const { token } = data.login
+        setCookie('token', token, { path: '/' })
+  
+        router.push('/')
+      // } else {
+      //   window.location.reload(false);
       }
+    },
+    onError: (error) => {
+      setError(error.graphQLErrors)
     }
   });
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+
+    getLogin({
+      variables: {
+        data: {
+          username,
+          password,
+        }
+      }
+    })
+  }
 
   const innerBlock = () => {
     if (loading) return (
@@ -45,36 +68,26 @@ const LoginPage = () => {
       </>
     )
 
-    if (error) {
-      console.log(error);
-    }
-
-    if (data && data.login && data.login.token) {
-      const { token } = data.login
-      setCookie('token', token, { path: '/' })
-
-      router.push('/')
-    }
-
     return (
       <>
+        <Error>{errorMessage}</Error>
         <TextField error={!!error} label="username" fullWidth sx={{ marginBottom: '.5em' }} onChange={(e) => setUsername(e.target.value)} />
         <TextField error={!!error} label="password" type={'password'} fullWidth sx={{ marginBottom: '.5em' }} onChange={(e) => setPassword(e.target.value)}/>
   
         <div className='bottom'>
           <Link href={'/auth/register'} passHref>registration</Link>
   
-          <Button type="submit" onClick={() => getLogin()}>log in</Button>
+          <Button type="submit">log in</Button>
         </div>
 
         <style jsx>{`
 
-        .bottom {
-          margin-top: 20px;
-          display: flex;
-          justify-content: space-between;
-        }
-      `}</style>
+          .bottom {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+          }
+        `}</style>
       </>
     )
   }
@@ -87,9 +100,12 @@ const LoginPage = () => {
         <div className="auth-block">
           <h2>Log in</h2>
 
-          <div className="form">
+          <form
+            className="form"
+            onSubmit={(e) =>  { handleSubmit(e) }}
+          >
             {innerBlock()}
-          </div>
+          </form>
         </div>
       </Layout>
 

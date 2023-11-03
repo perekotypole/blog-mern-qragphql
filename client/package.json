@@ -4,7 +4,7 @@
     "dev": "next dev",
     "lint": "next lint --fix",
     "build": "next build",
-    "start": "next start"
+    "start": "next start -p 4000"
   },
   "dependencies": {
     "@apollo/client": "^3.5.10",

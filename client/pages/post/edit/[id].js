@@ -6,6 +6,7 @@ import { gql, useLazyQuery, useMutation, useQuery } from '@apollo/client';
 import Layout from '../../../components/Layout'
 import Editor from '../../../components/Editor'
 import Button from '../../../components/Button'
+import Error from '../../../components/Error';
 
 const UPDATE_PUBLISH = gql`
 mutation ($id: String, $data: UpdatePublicationInput) {
@@ -20,22 +21,22 @@ const PUBLICATION = gql`
       content,
       createdAt,
       views,
+      user {
+        _id,
+        username,
+      }
     }
   }
 `;
-
-const USERNAME = gql`query { username }`;
 
 const PublishPage = () => {
   const router = useRouter()
   const { id: postID, author = null } = router.query
 
-  const { data: { username } = {}, loading: userLoading } = useQuery(USERNAME)
-  const [getPublication, { data: { publication } = {}, called }] = useLazyQuery(PUBLICATION)
-  const [updatePublication, { data: { updatePublish } = {}, loading: updateLoading }] = useMutation(UPDATE_PUBLISH)
-
   const [title, setTitle] = useState()
   const [content, setContect] = useState()
+
+  const [errorMessage, setError] = useState()
 
   const variables = {
     data: {
@@ -44,39 +45,62 @@ const PublishPage = () => {
     }
   }
 
-  useEffect(() => {
-    variables.id = postID
-    variables.data.user = author
-    console.log(variables.data.user);
+  const [getPublication, { data: { publication } = {}, called }] = useLazyQuery(PUBLICATION, {
+    onCompleted: ({ publication }) => {
+      setTitle(publication.title),
+      setContect(JSON.parse(publication.content))
+    },
+    onError: (error) => {
+      console.log(error);
+      router.replace('/')
+    }
+  })
+  const [updatePublication, { loading: updateLoading }] = useMutation(UPDATE_PUBLISH, {
+    onCompleted: () => {
+      setError()
+      router.push(`/post/@${publication.user.username}/${postID}`)
+    },
+    onError: (error) => {
+      setError(error)
+    }
+  })
 
+  useEffect(() => {
+    console.log(variables.data);
+    variables.id = postID
+    
     variables.data.title = title
     variables.data.content = content && JSON.stringify(content)
-
+    
     if (publication) {
+      variables.data.user = author || publication.user._id
       variables.data.createdAt = publication.createdAt
       variables.data.views = publication.views
     }
   }, [content, title]);
 
   useEffect(() => {
-    if (publication) {
-      setTitle(publication.title),
-      setContect(publication.content)
-    }
-  }, [publication]);
-
-  useEffect(() => {
     if (!called && postID) getPublication({ variables: { id: postID } })
   }, [postID]);
 
-  if (updatePublish && username) router.push(`/post/@${username}/${postID}`)
-  if (!postID || !publication || updateLoading || userLoading) return <Layout loading={true}></Layout>
+  const handleSubmit = () => {
+    if (!variables.data.title || !variables.data.content) {
+      setError('Check the entered data')
+      return
+    }
+
+    // updatePublication({ variables })
+  }
+
+  if (!postID || !publication || updateLoading) return <Layout loading={true}></Layout>
 
   return(
     <>
-      <Layout sidebar={<Button onClick={() => {
-        if (variables.data.title && variables.data.content) updatePublication({ variables })
-      }}>save</Button>}>
+      <Layout sidebar={<>
+        <Error>{errorMessage}</Error>
+
+        <Button onClick={() => { handleSubmit() }}>save</Button>
+      </>}>
         <div style={{ margin: '-20px -40px' }}>
           <Paper
             sx={{

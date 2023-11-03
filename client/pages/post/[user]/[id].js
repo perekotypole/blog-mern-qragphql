@@ -19,6 +19,7 @@ import BookmarkBorderOutlinedIcon from '@mui/icons-material/BookmarkBorderOutlin
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 import { deepPurple } from "@mui/material/colors"
+import Error from '../../../components/Error'
 
 const PUBLICATION = gql`
   query ($id: String) {
@@ -118,12 +119,18 @@ const AdditionalBlock = ({
   views,
   bio,
   saved, onSave = () => {},
-  postID
+  postID,
+  token
 }) => {
   const [cookie] = useCookies(['token'])
   const [savedValue, setSavedValue] = useState(saved);
 
-  const { data: { reactions } = {} } = useQuery(REACTIONS, { variables: { postID } })
+  const { data: { reactions } = {} } = useQuery(REACTIONS, {
+    variables: { postID },
+    onError: (error) => {
+      console.log(error.message);
+    }
+  })
   const [setReaction] = useMutation(SET_REACTION)
 
   return (
@@ -168,7 +175,7 @@ const AdditionalBlock = ({
           </div>
 
           <div onClick={() => { onSave(); setSavedValue(!savedValue) }}>
-            { cookie['token'] && (savedValue ? <Bookmark></Bookmark> : <BookmarkBorderOutlinedIcon></BookmarkBorderOutlinedIcon>) }
+            { token && (savedValue ? <Bookmark></Bookmark> : <BookmarkBorderOutlinedIcon></BookmarkBorderOutlinedIcon>) }
           </div>
         </div>
 
@@ -211,37 +218,71 @@ const AdditionalBlock = ({
 const PostPage = () => {
   const router = useRouter()
   const { id: postID } = router.query
-  
-  const [getPublication, { data: { publication } = {}, called }] = useLazyQuery(PUBLICATION)
-  const [incViews, { data: { addViews: newViews } = {}, called: calledIncViews }] = useMutation(ADD_VIEWS)
-  const [addComment, { data: { writeComment: newComment } = {}, error, reset }] = useMutation(WRITE_COMMENT)
-  const [toggleSaved, { data: { toggleSaved: saved } = {} }] = useMutation(SAVE)
-  
+
   const commentRef = useRef()
   const [comment, setComment] = useState()
   const [comments, setNewComment] = useState([])
 
-  const { data: { comments: commentsData } = {} } = useQuery(COMMENTS, { variables: { publicationID: postID } })
-
-  useEffect(() => {
-    if (commentsData) setNewComment(oldArray => [...oldArray, ...commentsData])
-  }, [commentsData]);
-
-  if (newComment) {
-    setNewComment(oldArray => [newComment, ...oldArray])
-
-    commentRef.current?.querySelector('textarea').value = null
-    setComment()
-    reset()
-  }
-
-  useEffect(() => {
-    if (!called && postID) getPublication({ variables: { id: postID } })
-  }, [postID]);
+  const [errorMessage, setError] = useState()
+  const [commentErrorMessage, setCommentError] = useState()
 
   const [cookies, setCookie] = useCookies(['views'])
+  const [cookieToken] = useCookies(['token'])
+  
+  const [getPublication, { data: { publication, loading } = {}, called }] = useLazyQuery(PUBLICATION,{
+    onCompleted: () => {
+      setError()
+    },
+    onError: (error) => {
+      console.log(error.message);
+    }
+  })
+  const [incViews, { data: { addViews: newViews } = {}, called: calledIncViews }] = useMutation(ADD_VIEWS,{
+    onCompleted: () => {
+      setError()
+    },
+    onError: (error) => {
+      console.log(error.message);
+    }
+  })
+  const [addComment, { data: { writeComment: newComment } = {}, error, reset }] = useMutation(WRITE_COMMENT,{
+    onCompleted: ({ writeComment: newComment }) => {
+      setError()
+
+      setNewComment(oldArray => [newComment, ...oldArray])
+
+      const commentText = commentRef.current?.querySelector('textarea')
+      commentText.value = null
+      
+      setComment()
+      reset()
+    },
+    onError: (error) => {
+      console.log(error.message);
+      setCommentError(error.graphQLErrors)
+    }
+  })
+  const [toggleSaved, { data: { toggleSaved: saved } = {} }] = useMutation(SAVE,{
+    onCompleted: () => {
+      setError()
+    },
+    onError: (error) => {
+      console.log(error.message);
+    }
+  })
+  const { data: { comments: commentsData } = {} } = useQuery(COMMENTS, {
+    variables: { publicationID: postID },
+    onCompleted: ({ comments: commentsData }) => {
+      setNewComment(oldArray => [...oldArray, ...commentsData])
+    },
+    onError: (error) => {
+      console.log(error.message);
+    }
+  })
   
   useEffect(() => {
+    if (!called && postID) getPublication({ variables: { id: postID } })
+    
     if (postID && !calledIncViews) {
       const views = cookies['views'] || []
 
@@ -254,108 +295,110 @@ const PostPage = () => {
     }
   }, [postID]);
 
-  if (publication) {
-    const body = draftToHtml(JSON.parse(publication.content));
-
-    const Article = styled.div`
-      & > * {
-        margin-top: 25px;
-        margin-bottom: 25px;
-      }
-
-      & p {
-        text-align: justify;
-      }
-
-      & img {
-        display: block;
-        margin: 0 auto;
-        border-radius: 20px;
-        max-height: 350px;
-      }
-
-      & ul {
-        margin-left: 1.7em;
-
-        & li {
-          margin-bottom: 5px;
-        }
-      }
-
-    `
-
-    return (
-      <>
-        <Layout adminPanel={false} sidebar={
-          <AdditionalBlock
-            username={publication.user.username}
-            role={publication.user?.role}
-            published={new Date(Number(publication.user.createdAt))}
-            views={newViews || publication.views}
-            bio={publication.user.bio}
-            saved={publication.saved}
-            onSave={() => { toggleSaved({ variables: { publicationID: postID } }) }}
-            postID={postID}
-          ></AdditionalBlock>
-        }>
-          <h2 className="title">{publication.title}</h2>
-
-          <Article
-            dangerouslySetInnerHTML={{__html: body}}
-          ></Article>
-
-          <div className="comments">
-            <div className="comment-input">
-              <TextField
-                ref={commentRef}
-                id="outlined-multiline-static"
-                label='comment'
-                multiline
-                rows={2}
-                sx={{
-                  width: '100%',
-                }}
-                onChange={(e) => {setComment(e.target.value)}}
-              />
-
-              <Button onClick={() => comment && addComment({ variables: { comment, publicationID: postID }})}>send</Button>
-            </div>
-
-            {
-              comments.map(({ _id, user, createdAt, content }) => 
-                <div key={_id}>
-                  <Comment
-                    id={_id}
-                    username={user.username}
-                    date={new Date(Number(createdAt))}
-                    content={content}
-                  ></Comment>
-                </div>
-              )
-            }
-          </div>
-        </Layout>
-
-        <style jsx>{`
-
-          .comments {
-            margin-top: 50px;
-          }
-
-          .comment-input {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            align-items: flex-end;
-          }
-        `}</style>
-      </>
-    )
-  }
-
-  return <>
+  if (!publication || loading || errorMessage) return <>
     <Layout loading={true}></Layout>
   </>
+
+  const body = draftToHtml(JSON.parse(publication.content));
+
+  const Article = styled.div`
+    & > * {
+      margin-top: 25px;
+      margin-bottom: 25px;
+    }
+
+    & p {
+      text-align: justify;
+    }
+
+    & img {
+      display: block;
+      margin: 0 auto;
+      border-radius: 20px;
+      max-height: 350px;
+    }
+
+    & ul {
+      margin-left: 1.7em;
+
+      & li {
+        margin-bottom: 5px;
+      }
+    }
+
+  `
+
+  return (
+    <>
+      <Layout adminPanel={false} sidebar={
+        <AdditionalBlock
+          username={publication.user.username}
+          role={publication.user?.role}
+          published={new Date(Number(publication.user.createdAt))}
+          views={newViews || publication.views}
+          bio={publication.user.bio}
+          saved={publication.saved}
+          onSave={() => { toggleSaved({ variables: { publicationID: postID } }) }}
+          postID={postID}
+          token={cookieToken['token']}
+        ></AdditionalBlock>
+      }>
+        <h2 className="title">{publication.title}</h2>
+
+        <Article
+          dangerouslySetInnerHTML={{__html: body}}
+        ></Article>
+
+        <div className="comments">
+          {cookieToken['token'] ? <div className="comment-input">
+            <Error>{commentErrorMessage}</Error>
+
+            <TextField
+              ref={commentRef}
+              id="outlined-multiline-static"
+              label='comment'
+              multiline
+              rows={2}
+              error={commentErrorMessage}
+              sx={{
+                width: '100%',
+              }}
+              onChange={(e) => {setComment(e.target.value)}}
+            />
+
+            <Button onClick={() => comment && addComment({ variables: { comment, publicationID: postID }})}>send</Button>
+          </div> : <hr></hr>}
+
+          {
+            comments.map(({ _id, user, createdAt, content }) => 
+              <div key={_id}>
+                <Comment
+                  id={_id}
+                  username={user.username}
+                  date={new Date(Number(createdAt))}
+                  content={content}
+                ></Comment>
+              </div>
+            )
+          }
+        </div>
+      </Layout>
+
+      <style jsx>{`
+
+        .comments {
+          margin-top: 50px;
+        }
+
+        .comment-input {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          align-items: flex-end;
+        }
+      `}</style>
+    </>
+  )
 }
 
 export default PostPage

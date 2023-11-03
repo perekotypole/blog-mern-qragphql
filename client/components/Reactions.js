@@ -8,7 +8,12 @@ const ROLE = gql`query { role }`
 const Reactions = ({ key = null, initReactions = [], onChange = () => {} }) => {
   let loadedInit = false
 
-  const { data: { role } = {} } = useQuery(ROLE)
+  const { data: { role = 'guest' } = { } } = useQuery(ROLE, {
+    onError: (error) => {
+      console.log(error.message);
+    }
+  })
+  
   const initDefaultReactions = [
     {
       label: 'laugh',

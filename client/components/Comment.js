@@ -44,7 +44,15 @@ const Comment = ({
   avatar,
   content,
 }) => {
-  const { data: { commentReactions: reactions } = {} } = useQuery(REACTIONS, { variables: { commentID } })
+  const { data: { commentReactions: reactions } = {}, error } = useQuery(
+    REACTIONS,
+    {
+      variables: { commentID },
+      onError: (error) => {
+        console.log(error.message);
+      }
+    }
+  )
   const [setReaction] = useMutation(SET_REACTION)
 
   return (
@@ -68,10 +76,10 @@ const Comment = ({
           {content}
         </div>
 
-        <Reactions
+        {(reactions || error) && <Reactions
             key={commentID}
             initReactions={reactions}
-            onChange={(reaction) => {setReaction({ variables: { commentID, reaction }})}}></Reactions>
+            onChange={(reaction) => {setReaction({ variables: { commentID, reaction }})}}></Reactions>}
       </div>
 
       <style jsx>{`

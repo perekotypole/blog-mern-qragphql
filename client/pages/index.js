@@ -25,7 +25,11 @@ const LATEST = gql`
 `
 
 const HomePage = () => {
-  const {data: { latestPublications: publications } = {}, loading} = useQuery(LATEST)
+  const {data: { latestPublications: publications } = {}, loading} = useQuery(LATEST, {
+    onError: (error) => { 
+      console.log(error.message);
+    }
+  })
 
   if (loading || !publications) return <Layout loading/>
 
@@ -60,7 +64,7 @@ const HomePage = () => {
         { posts }
       </Layout>
 
-      <style jsx>{`
+      <style global jsx>{`
       `}</style>
     </>
   )
